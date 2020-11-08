@@ -1,0 +1,52 @@
+const puppeteer = require('puppeteer');
+const fs = require('fs');
+
+let url = 'https://www.rekhta.org/ghazals/sunaa-hai-log-use-aankh-bhar-ke-dekhte-hain-ahmad-faraz-ghazals?lang=ur';
+(async () => {    
+    let arr =[];    
+	let total = 5;
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+	await page.setRequestInterception(true);
+    
+    page.on('request', (req) => {
+        if(req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image'){
+            req.abort();
+        }
+        else {
+            req.continue();
+        }
+    });
+    
+	
+	await page.goto(url,{waitUntil: 'domcontentloaded'});	
+	console.log('page loaded...')	
+	let next;
+	await page.evaluate((arr)=> {		
+            let a = document.querySelector("div.pMC").innerText;
+            arr.push(a);			
+			console.log('p1 pushed=' + a)
+        },arr);
+	
+    for (let index = 0; index < total; index++) {		
+		console.log('p'+index+1 + ' pushed. Now on page ' + index+2)						
+		console.log(next);
+        await page.evaluate(async (arr,next)=> {			
+			next = (document.querySelector("a.nextPoem")).href;
+			await page.goto(next,{waitUntil: 'domcontentloaded'});				
+
+            let a = document.querySelector("div.pMC").innerText;
+            arr.push(a);
+			console.log('p'+index+2+' pushed')
+        },arr,next);
+        
+    }         
+
+    await browser.close();
+    let result = arr.join('\r\n\r\n');
+    fs.writeFile("faraz.txt", result, (err)=>{
+        if (err) throw err;
+        console.log('Saved!');
+    });
+    
+})();
