@@ -1,41 +1,61 @@
-const puppeteer = require('puppeteer');
+// const fetch = require('node-fetch');
+const fetch = require('node-fetch-retry');
+const $ = require('node-html-parser');
 const fs = require('fs');
 
-let url = `https://www.urduweb.org/mehfil/forums/%D8%A7%D9%81%D8%B3%D8%A7%D9%86%DB%92.97/`;
-let arr =[];
-(async () => {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();    
-    await page.goto(url);
-    var lastPageNumber = 6; 
-    for (let pg = 2; pg <= lastPageNumber; pg++) {        
-        await page.waitFor(1000);        
-        // You can use results.push, but will get collection of collections at the end of iteration
-        arr = arr.concat(await extractedEvaluateCall(page));        
-        if (pg != lastPageNumber+1) {
-            url += 'page-'+pg;
-            await page.goto(url);            
+var text = fs.readFileSync("./links/ghalib.txt", "utf-8");
+var URLs = text.split('\n');
+var passedUrls = [];
+var failedUrls = [];
+var count = URLs.length;
+var writeStream = fs.createWriteStream('./data/ghalib-hi.txt', { flags: 'a' });
+var failedStream = fs.createWriteStream('./links/failed.txt', { flags: 'a' });
+
+for (let i = 0; i < URLs.length; i++) {
+    (async () => {
+        try {
+            var url = URLs[i];
+            let opts = {
+                method: 'GET',
+                retry: 3,
+                pause: 1000,
+                callback: retry => { console.log(`Trying: ${retry}`) }
+            }
+
+            // let res = await fetch('https://google.com', opts)
+            const response = await fetch(url, opts);
+            const text = await response.text();
+            // console.log(text.match(/<h4>(.*?)<\/h4>/)[1]);        
+            var document = $.parse(text);
+            var heading = document.querySelector('h1').rawText;
+            var author = document.querySelector('.authorAddFavorite').rawText;
+            var content = ''
+            document.querySelectorAll('.pMC p').forEach(p => content += p.rawText + '\n');
+            var a = new URL(url);
+            var link = a.pathname.replace(/\/.+\//, '').replace(/-stories$/, '');
+            var description = link.split("-").map(e => e.charAt(0).toUpperCase() + e.substring(1)).join(" ") + " in Urdu Unicode text.\n" + author + ' کا افسانہ "' + heading + '" اردو یونیکوڈ متن میں۔';
+            var o = { title: heading + " — " + author, text: content, label: "افسانے,مصنف:" + author, description, link,url };
+
+            var result = JSON.stringify(o);
+            console.log((i + 1), heading);
+            // writeStream.write((i + 1) + result + ',\n');
+            writeStream.write(content+'\n\n');
+            passedUrls.push(i);
+            console.log(count);                            
+            count--;
+            // passedUrls = passedUrls.sort((a,b)=>a-b);        
         }
-    }        
-
-    await browser.close();
-    let links = arr.join('\r\n');
-    fs.writeFile("links.txt", links, (err)=>{
-        if (err) throw err;
-        console.log('Saved!');
-    });
-    
-})();
-
-async function extractedEvaluateCall(page) {        
-        await page.evaluate(() => {
-            let data = [];
-            let a = document.querySelectorAll(".discussionListItem .title");
-            a.forEach(el => {             
-                if ((el.querySelector("a:nth-child(2)"))) 
-                    data.push((el.querySelector("a:nth-child(2)[href]")));
-                else data.push((el.querySelector("a[href]")));
-            });
-            return data;
-        });            
+        catch (err) {
+            console.log(err); // TypeError: failed to fetch
+            // console.log('LAST URL');
+            failedStream.write(url+'\n');                
+        }
+    })()
 }
+//pass fail ?
+/* for (let j = 0; j < URLs.length; j++) {
+    if (!(passedUrls.includes(URLs[j])))
+        failedUrls.push(j);
+    failedStream.write(URLs[j]);
+}
+console.log(failedUrls.length + 'in total. These ones: ', failedUrls.sort((a, b) => a - b)); */
