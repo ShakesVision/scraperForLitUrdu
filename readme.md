@@ -9,7 +9,7 @@ The code works for both Prose and Poetry. Comment/Uncomment the codes for your n
 1. Clone the repo.
 `git clone https://github.com/ShakesVision/scraperForLitUrdu.git`
 2. Change the diretory using `cd scraperForLitUrdu`
-3. Run `npm init`
+3. Run `npm install`
 
 ## Run
 1. Add a file with all the links inside `./links` directory.
@@ -26,7 +26,8 @@ var arr = [];
 all.forEach(div => {
 var a =div.querySelector('a:nth-child(2)');
 if(!(a.hasAttribute('class'))) arr.push(a.href)});
-console.log(arr)
+console.log(arr.join('\n'));
+document.body.innerText = arr.join('\n');
 ```
 If links are less in number, select and copy them directly. But for large number of links, continue.
 
