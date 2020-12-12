@@ -3,9 +3,9 @@ const fetch = require('node-fetch-retry');
 const $ = require('node-html-parser');
 const fs = require('fs');
 
-var name = 'iqbal-hi';
+var name = 'wali-hi';
 
-var text = fs.readFileSync(`./links/iqbal.txt`, "utf-8");
+var text = fs.readFileSync(`./links/wali.txt`, "utf-8");
 var URLs = text.split('\n');
 var passedUrls = [];
 var failedUrls = [];
