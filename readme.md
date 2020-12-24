@@ -35,6 +35,9 @@ For now, I've not automated the links collection, will do in the future. Till th
 ### Unobfuscated Codes for the Bookmarklets
 Putting it here just to make sure I can create a bookmarklet whenever I need using [bookmarkleter](https://chriszarate.github.io/bookmarkleter/).
 
+[Hello World!][1]
+[1]:javascript:alert('Hello World')
+
 **CopyRekhtaLinks:**
 ```
 var all = document.querySelectorAll('div.contentListBody.contentLoadMoreSection.nwPoetListBody > div');
